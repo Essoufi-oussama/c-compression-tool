@@ -33,7 +33,12 @@ void clear_tree(t_alpha *root)
 void clear_array(t_alpha **frequencies, int i)
 {
 	for (int j = 0; j < i; j++)
-		free(frequencies[j]);
+	{
+		if (frequencies[j]->is_leaf)
+			clear_tree(frequencies[j]);
+		else
+			free(frequencies[j]);
+	}
 	free(frequencies);
 }
 
@@ -70,12 +75,10 @@ t_alpha	**read_file(FILE *fp, int *i)
 	t_alpha *map[256] = {0};
 	int j = 0;
 	t_alpha **frequency_array;
+	char c;
 
-	while (!feof(fp))
-	{
-		char c = fgetc(fp);
+	while ((c = fgetc(fp)) != EOF)
 		update_frequencies(map, c, fp, i);
-	}
 	frequency_array = malloc(sizeof(t_alpha *) * (*i));
 	if (frequency_array == NULL)
 		fatal_error_handle(map);
@@ -106,7 +109,7 @@ void	sort_array(t_alpha **frequency_array, int n)
 	}
 }
 
-t_alpha *add_leaf(t_alpha *left, t_alpha **frequencies, int right_i, int n)
+void	add_leaf(t_alpha **frequencies, int i, int n)
 {
 	t_alpha *new;
 
@@ -114,35 +117,35 @@ t_alpha *add_leaf(t_alpha *left, t_alpha **frequencies, int right_i, int n)
 	if (new == NULL)
 	{
 		write(2, "Malloc error\n", 14);
-		clear_tree_error(left);
-		clear_array(frequencies, n);
+		clear_array(frequencies + i, n);
 		exit (1);
 	}
-	if (left == NULL)
-		new->freq = frequencies[right_i]->freq;
-	else
-		new->freq = frequencies[right_i]->freq + left->freq;
+	new->right = frequencies[i + 1];
+	new->left  = frequencies[i];
+	new->freq = new->right->freq + new->left->freq;
 	new->is_leaf = 1;
 	new->c = 0;
-	new->left = left;
-	new->right = frequencies[right_i];
-	return (new);
+	frequencies[i + 1] = new;
+	sort_array(frequencies + (i + 1), n - (i + 1));
+
 }
+
 
 t_alpha *build_huffman_tree(t_alpha **frequencies, int n)
 {
 	t_alpha *root = NULL;
+	
 
-	if (n == 1)
-		root = add_leaf(root, frequencies, 0, n);
-	else
+	if (n > 1)
 	{
-		root = add_leaf(frequencies[0], frequencies, 1, n);
-		for (int i = 2; i < n; i++)
-			root = add_leaf(root, frequencies, i, n);
+		for (int i = 0; i < n - 1; i++)
+			add_leaf(frequencies, i, n);
 	}
+	root = frequencies[n - 1];
+	free(frequencies);
 	return (root);
 }
+
 // need to check for empty file
 
 int	main(int argc, char **argv)
@@ -160,8 +163,6 @@ int	main(int argc, char **argv)
 	frequencies = read_file(fp, &i);
 	fclose(fp);
 	sort_array(frequencies, i);
-	t_alpha *root =build_huffman_tree(frequencies, i);
-	free(frequencies);
-	// print_tree(root, 0);
+	t_alpha *root = build_huffman_tree(frequencies, i);
 	clear_tree(root);
 }
