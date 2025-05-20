@@ -42,6 +42,15 @@ void clear_array(t_alpha **frequencies, int i)
 	free(frequencies);
 }
 
+void clear_lookup_table(t_table **table, int i)
+{
+	for (int j = 0; j < i; j++)
+	{
+		free(table[j]);
+	}
+	free(table);
+}
+
 t_alpha	*add_non_leaf(char c, t_alpha **map, FILE *fp, int *i)
 {
 	t_alpha	*new;
@@ -130,7 +139,6 @@ void	add_leaf(t_alpha **frequencies, int i, int n)
 
 }
 
-
 t_alpha *build_huffman_tree(t_alpha **frequencies, int n)
 {
 	t_alpha *root = NULL;
@@ -146,23 +154,87 @@ t_alpha *build_huffman_tree(t_alpha **frequencies, int n)
 	return (root);
 }
 
+t_table	*create_new_table_entry(t_alpha *original_root,t_table **table, t_alpha *current, int n, int result, int depth)
+{
+	t_table *new;
+
+	new = malloc(sizeof(t_table));
+	if (new == NULL)
+	{
+		fprintf(stderr, "Malloc error\n");
+		clear_tree(original_root);
+		for (int i = 0; i < n; i++)
+			free(table[i]);
+		free(table);
+		exit(1);
+	}
+	new->c = current->c;
+	new->freq = current->freq;
+	new->code = result;
+	new->bits = depth;
+	return (new);
+}
+
+void	populate_table(t_alpha *original_root, t_alpha *current ,t_table **table, int *i, int result, int depth)
+{
+	if (current == NULL)
+		return;
+	if (!current->is_leaf)
+	{
+		table[*i] = create_new_table_entry(original_root, table, current, *i, result, depth);
+		(*i)++;
+	}
+	populate_table(original_root, current->left, table, i, result << 1 | 0, depth + 1);
+	populate_table(original_root, current->right, table, i, result << 1 | 1, depth + 1);
+}
+
+t_table **build_lookup_table(t_alpha *root, int n)
+{
+	t_table **table;
+	int i = 0;
+	
+	table = malloc(sizeof(t_table *) * n);
+	if (table == NULL)
+	{
+		fprintf(stderr, "Malloc failure\n");
+		clear_tree(root);
+	}
+	populate_table(root, root, table, &i, 0, 0);
+	return (table);
+}
+
 // need to check for empty file
+
+// void	print_lokout_table(t_table **table, int n)
+// {
+// 	printf("char	freq	code  	Num_bits   \n");
+// 	for (int i = 0; i < n; i++)
+// 	{
+// 		printf("%c	 %d	  %d	%d\n",table[i]->c ,table[i]->freq ,table[i]->code ,table[i]->bits);
+// 	}
+// }
 
 int	main(int argc, char **argv)
 {
 	FILE	*fp;
 	t_alpha	**frequencies;
 	int		i = 0;
+	t_alpha *root ;
+	t_table **table = NULL;
 
 	if (argc != 2)
 	{
-		fprintf(stderr, "Invalid Usage: ./a.out file");
+		fprintf(stderr, "Invalid Usage: ./a.out file\n");
 		return (1);
 	}
 	fp = fopen(argv[1], "r");
 	frequencies = read_file(fp, &i);
 	fclose(fp);
 	sort_array(frequencies, i);
-	t_alpha *root = build_huffman_tree(frequencies, i);
+	root = build_huffman_tree(frequencies, i);
+	table = build_lookup_table(root, i);
 	clear_tree(root);
+	// print_lokout_table(table, i);
+	clear_lookup_table(table, i);
+
 }
