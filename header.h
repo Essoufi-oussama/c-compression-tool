@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <fcntl.h>
 #define BUFFER_SIZE 100
 
 typedef struct s_alpha
@@ -22,6 +23,16 @@ typedef struct s_table
 	int				code;
 	char			bits;
 }	t_table;
+
+typedef struct s_data
+{
+	FILE	*fp;
+	t_alpha	**frequencies;
+	int		n_freq;
+	t_alpha	*root ;
+	t_table	**table;
+	int		fd;
+} t_data;
 
 char				*strjoin(char *s1, char *s2);
 char				*ft_strdup(const char *s1);

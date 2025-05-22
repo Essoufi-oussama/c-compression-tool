@@ -12,7 +12,7 @@ void	fatal_error_handle(t_alpha **map)
 	exit(1);
 }
 
-void clear_tree_error(t_alpha *root)
+void	clear_tree_error(t_alpha *root)
 {
 	if (root == NULL)
 		return ;
@@ -21,16 +21,16 @@ void clear_tree_error(t_alpha *root)
 		free(root);
 }
 
-void clear_tree(t_alpha *root)
+void	clear_tree(t_alpha *root)
 {
 	if (root == NULL)
-		return;
+		return ;
 	clear_tree(root->left);
 	clear_tree(root->right);
 	free(root);
 }
 
-void clear_array(t_alpha **frequencies, int i)
+void	clear_array(t_alpha **frequencies, int i)
 {
 	for (int j = 0; j < i; j++)
 	{
@@ -42,24 +42,24 @@ void clear_array(t_alpha **frequencies, int i)
 	free(frequencies);
 }
 
-void clear_lookup_table(t_table **table, int i)
+void	clear_lookup_table(t_data *data)
 {
-	for (int j = 0; j < i; j++)
+	for (int j = 0; j < data->n_freq; j++)
 	{
-		free(table[j]);
+		free(data->table[j]);
 	}
-	free(table);
+	free(data->table);
 }
 
-t_alpha	*add_non_leaf(char c, t_alpha **map, FILE *fp, int *i)
+t_alpha	*add_non_leaf(char c, t_alpha **map, t_data *data)
 {
 	t_alpha	*new;
 
-	(*i)++;
+	data->n_freq += 1;
 	new = malloc(sizeof(t_alpha));
 	if (new == NULL)
 	{
-		fclose(fp);
+		fclose(data->fp);
 		fatal_error_handle(map);
 	}
 	new->c = c;
@@ -70,102 +70,100 @@ t_alpha	*add_non_leaf(char c, t_alpha **map, FILE *fp, int *i)
 	return (new);
 }
 
-void	update_frequencies(t_alpha **map, char c, FILE *fp, int *i)
+void	update_frequencies(t_alpha **map, char c, t_data *data)
 {
-	if (!map[(unsigned char) c])
-		map[(unsigned char) c] = add_non_leaf(c, map, fp, i);
+	if (!map[(unsigned char)c])
+		map[(unsigned char)c] = add_non_leaf(c, map, data);
 	else
-		map[(unsigned char) c]->freq += 1;
+		map[(unsigned char)c]->freq += 1;
 }
 
-t_alpha	**read_file(FILE *fp, int *i)
+void	read_file(t_data *data)
 {
 	char	buffer[BUFFER_SIZE] = {0};
-	t_alpha *map[256] = {0};
-	int j = 0;
-	t_alpha **frequency_array;
-	char c;
+	t_alpha	*map[256] = {0};
+	int		j;
+	t_alpha	**frequency_array;
+	char	c;
 
-	while ((c = fgetc(fp)) != EOF)
-		update_frequencies(map, c, fp, i);
-	frequency_array = malloc(sizeof(t_alpha *) * (*i));
-	if (frequency_array == NULL)
+	j = 0;
+	while ((c = fgetc(data->fp)) != EOF)
+		update_frequencies(map, c, data);
+	data->frequencies = malloc(sizeof(t_alpha *) * (data->n_freq));
+	if (data->frequencies == NULL)
 		fatal_error_handle(map);
 	for (int i = 0; i < 256; i++)
 	{
 		if (map[i])
 		{
-			frequency_array[j] = map[i];
+			data->frequencies[j] = map[i];
 			j++;
 		}
 	}
-	return (frequency_array);
 }
 
-void	sort_array(t_alpha **frequency_array, int n)
+void	sort_array(t_data *data)
 {
-	for(int i = 0; i < n; i++)
+	int		lowest_index;
+	t_alpha	*tmp;
+
+	for (int i = 0; i < data->n_freq; i++)
 	{
-		int	lowest_index = i;
-		for (int j = i + 1; j < n; j++)
+		lowest_index = i;
+		for (int j = i + 1; j < data->n_freq; j++)
 		{
-			if (frequency_array[j]->freq < frequency_array[lowest_index]->freq)
+			if (data->frequencies[j]->freq < data->frequencies[lowest_index]->freq)
 				lowest_index = j;
 		}
-		t_alpha *tmp = frequency_array[i];
-		frequency_array[i] = frequency_array[lowest_index];
-		frequency_array[lowest_index] = tmp;
+		tmp = data->frequencies[i];
+		data->frequencies[i] = data->frequencies[lowest_index];
+		data->frequencies[lowest_index] = tmp;
 	}
 }
 
-void	add_leaf(t_alpha **frequencies, int i, int n)
+void	add_leaf(t_data *data, int i)
 {
-	t_alpha *new;
+	t_alpha	*new;
 
 	new = malloc(sizeof(t_alpha));
 	if (new == NULL)
 	{
 		write(2, "Malloc error\n", 14);
-		clear_array(frequencies + i, n);
-		exit (1);
+		clear_array(data->frequencies + i, data->n_freq);
+		exit(1);
 	}
-	new->right = frequencies[i + 1];
-	new->left  = frequencies[i];
+	new->right = data->frequencies [i + 1];
+	new->left = data->frequencies [i];
 	new->freq = new->right->freq + new->left->freq;
 	new->is_leaf = 1;
 	new->c = 0;
-	frequencies[i + 1] = new;
-	sort_array(frequencies + (i + 1), n - (i + 1));
-
+	data->frequencies [i + 1] = new;
+	sort_array(data);
 }
 
-t_alpha *build_huffman_tree(t_alpha **frequencies, int n)
+void	build_huffman_tree(t_data  *data)
 {
-	t_alpha *root = NULL;
-	
-
-	if (n > 1)
+	if (data->n_freq > 1)
 	{
-		for (int i = 0; i < n - 1; i++)
-			add_leaf(frequencies, i, n);
+		for (int i = 0; i < data->n_freq - 1; i++)
+			add_leaf(data, i);
 	}
-	root = frequencies[n - 1];
-	free(frequencies);
-	return (root);
+	data->root = data->frequencies[data->n_freq - 1];
+	free(data->frequencies);
 }
 
-t_table	*create_new_table_entry(t_alpha *original_root,t_table **table, t_alpha *current, int n, int result, int depth)
+t_table	*create_new_table_entry(t_data *data, t_alpha *current, int n, int result, int depth)
 {
-	t_table *new;
+	t_table	*new;
 
 	new = malloc(sizeof(t_table));
 	if (new == NULL)
 	{
 		fprintf(stderr, "Malloc error\n");
-		clear_tree(original_root);
+		clear_tree(data->root);
 		for (int i = 0; i < n; i++)
-			free(table[i]);
-		free(table);
+			free(data->table[i]);
+		free(data->table);
 		exit(1);
 	}
 	new->c = current->c;
@@ -175,66 +173,67 @@ t_table	*create_new_table_entry(t_alpha *original_root,t_table **table, t_alpha 
 	return (new);
 }
 
-void	populate_table(t_alpha *original_root, t_alpha *current ,t_table **table, int *i, int result, int depth)
+void	populate_table(t_data *data, t_alpha *current, int *i, int result, int depth)
 {
 	if (current == NULL)
-		return;
+		return ;
 	if (!current->is_leaf)
 	{
-		table[*i] = create_new_table_entry(original_root, table, current, *i, result, depth);
+		data->table[*i] = create_new_table_entry(data, current, *i, result, depth);
 		(*i)++;
 	}
-	populate_table(original_root, current->left, table, i, result << 1 | 0, depth + 1);
-	populate_table(original_root, current->right, table, i, result << 1 | 1, depth + 1);
+	populate_table(data, current->left, i, result << 1 | 0, depth + 1);
+	populate_table(data, current->right, i, result << 1 | 1, depth + 1);
 }
 
-t_table **build_lookup_table(t_alpha *root, int n)
+void	build_lookup_table(t_data *data)
 {
-	t_table **table;
-	int i = 0;
-	
-	table = malloc(sizeof(t_table *) * n);
-	if (table == NULL)
+	int		i;
+
+	i = 0;
+	data->table = malloc(sizeof(t_table *) * data->n_freq);
+	if (data->table == NULL)
 	{
 		fprintf(stderr, "Malloc failure\n");
-		clear_tree(root);
+		clear_tree(data->root);
+		exit(1);
 	}
-	populate_table(root, root, table, &i, 0, 0);
-	return (table);
+	populate_table(data, data->root, &i, 0, 0);
 }
 
-// need to check for empty file
-
-// void	print_lokout_table(t_table **table, int n)
-// {
-// 	printf("char	freq	code  	Num_bits   \n");
-// 	for (int i = 0; i < n; i++)
-// 	{
-// 		printf("%c	 %d	  %d	%d\n",table[i]->c ,table[i]->freq ,table[i]->code ,table[i]->bits);
-// 	}
-// }
+void	write_header_section(t_data *data)
+{
+	data->fd = open("out", O_CREAT | O_WRONLY, 0644);
+	if (data->fd == -1)
+	{
+		perror("open");
+		clear_tree(data->root);
+		clear_lookup_table(data);
+	}
+}
 
 int	main(int argc, char **argv)
 {
-	FILE	*fp;
-	t_alpha	**frequencies;
-	int		i = 0;
-	t_alpha *root ;
-	t_table **table = NULL;
+	t_data	data;
 
 	if (argc != 2)
 	{
 		fprintf(stderr, "Invalid Usage: ./a.out file\n");
 		return (1);
 	}
-	fp = fopen(argv[1], "r");
-	frequencies = read_file(fp, &i);
-	fclose(fp);
-	sort_array(frequencies, i);
-	root = build_huffman_tree(frequencies, i);
-	table = build_lookup_table(root, i);
-	clear_tree(root);
-	// print_lokout_table(table, i);
-	clear_lookup_table(table, i);
-
+	memset(&data, 0, sizeof(t_data));
+	data.fp = fopen(argv[1], "r");
+	if (data.fp == NULL)
+	{
+		perror("fopen\n");
+		return (1);
+	}
+	read_file(&data);
+	fclose(data.fp);
+	sort_array(&data);
+	build_huffman_tree(&data);
+	build_lookup_table(&data);
+	write_header_section(&data);
+	clear_tree(data.root);
+	clear_lookup_table(&data);
 }
