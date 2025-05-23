@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <stdint.h>
 #define BUFFER_SIZE 100
 
 typedef struct s_alpha
@@ -31,7 +32,6 @@ typedef struct s_data
 	int		n_freq;
 	t_alpha	*root ;
 	t_table	**table;
-	int		fd;
 } t_data;
 
 char				*strjoin(char *s1, char *s2);

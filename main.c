@@ -17,6 +17,7 @@ void	clear_tree_error(t_alpha *root)
 	if (root == NULL)
 		return ;
 	clear_tree_error(root->left);
+	clear_tree_error(root->right);
 	if (root->is_leaf)
 		free(root);
 }
@@ -203,14 +204,25 @@ void	build_lookup_table(t_data *data)
 
 void	write_header_section(t_data *data)
 {
-	data->fd = open("out", O_CREAT | O_WRONLY, 0644);
-	if (data->fd == -1)
+	data->fp = fopen("output", "wb");
+	if (data->fp == NULL)
 	{
-		perror("open");
+		perror("fopen");
 		clear_tree(data->root);
 		clear_lookup_table(data);
+		exit(1);
 	}
+	fwrite(&data->n_freq, sizeof(uint32_t), 1, data->fp);
+	for (int i = 0; i < data->n_freq; i++)
+	{
+		uint8_t c = (uint8_t)data->frequencies[i]->c;
+		uint32_t freq = data->frequencies[i]->freq;
+		fwrite(&c, sizeof(uint8_t), 1, data->fp);
+		fwrite(&freq, sizeof(uint32_t), 1, data->fp);
+	}
+	fclose(data->fp);
 }
+
 
 int	main(int argc, char **argv)
 {
