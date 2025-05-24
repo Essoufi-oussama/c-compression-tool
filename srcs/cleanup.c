@@ -6,21 +6,21 @@
 /*   By: oessoufi <oessoufi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 13:31:35 by oessoufi          #+#    #+#             */
-/*   Updated: 2025/05/23 18:08:02 by oessoufi         ###   ########.fr       */
+/*   Updated: 2025/05/24 14:38:35 by oessoufi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "header.h"
 
-
-void	fatal_error_handle(t_alpha **map)
+void	fatal_error_handle(t_alpha **map, int flag)
 {
 	for (int i = 0; i < 256; i++)
 	{
 		if (map[i])
 			free(map[i]);
 	}
-	write(2, "Malloc failure\n", 16);
+	if (flag)
+		write(2, "Malloc failure\n", 16);
 	exit(1);
 }
 

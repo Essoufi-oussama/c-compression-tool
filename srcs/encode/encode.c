@@ -1,4 +1,4 @@
-#include "header.h"
+#include "../header.h"
 
 void	write_header_section(t_data *data)
 {
@@ -22,7 +22,7 @@ void	write_header_section(t_data *data)
 		}
 		else
 		{
-			c = 0;
+			c = i;
 			freq = 0;
 		}
 		fwrite(&c, sizeof(uint8_t), 1, data->out_fp);
@@ -66,8 +66,16 @@ void	rw_encoded(t_data *data)
     fclose(data->out_fp);
 }
 
-void	encode(t_data *data)
+void	encode(t_data *data, char *file)
 {
+	data->fp = fopen(file, "r");
+	if (data->fp == NULL)
+	{
+		perror("fopen\n");
+		clear_tree(data->root);
+		clear_lookup_table(data);
+		exit (1);
+	}
 	write_header_section(data);
 	rw_encoded(data);
 }
