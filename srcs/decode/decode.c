@@ -50,7 +50,7 @@ void    decode(t_data *data)
                     j = 0;
                 }
                 bits_count -= depth;
-                buffer_byte = buffer_byte & ((1U << bits_count) - 1);
+                buffer_byte = buffer_byte & ((1U << bits_count) - 1); 
             }
             else
                 break;

@@ -42,11 +42,11 @@ void	rw_encoded(t_data *data)
 	while ((c = fgetc(data->fp)) != EOF)
 	{
 		bit_count += data->table[c]->bits;
-		bits_buffer = (bits_buffer << data->table[c]->bits) | data->table[c]->code;
+		bits_buffer = (bits_buffer << data->table[c]->bits) | data->table[c]->code; // adds the char code to the buffer
 		while (bit_count >= 8)
 		{
 			bit_count -= 8;
-			byte = (bits_buffer >> bit_count) & 0xFF;
+			byte = (bits_buffer >> bit_count) & 0xFF; //extract only 1 byte
 			buffer[buffer_index++] = byte;
 			if (buffer_index == BUFFER_SIZE)
 			{

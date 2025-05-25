@@ -23,7 +23,7 @@ clean:
 	rm -rf $(DECODE_OBJS)
 fclean: clean
 	rm -rf encode
-
+	rm -rf decode
 re: fclean all
 
 .PHONY: clean
