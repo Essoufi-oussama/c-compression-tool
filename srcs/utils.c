@@ -45,3 +45,18 @@ char    *strjoin(char *s1, char *s2)
 	str[i] = '\0';
 	return (str);
 }
+
+void	check_empty_file(FILE *fp)
+{
+	int	c;
+
+	c = fgetc(fp);
+	if (c == EOF)
+	{
+		fprintf(stderr, "empty FILE\n");
+        fclose(fp);
+		exit(1);
+	}
+	else
+		ungetc(c, fp);
+}

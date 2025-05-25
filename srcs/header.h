@@ -50,3 +50,4 @@ t_alpha				*add_non_leaf(uint8_t c, t_alpha **map, t_data *data);
 void				add_leaf(t_data *data, int i);
 void				build_huffman_tree(t_data *data);
 void				decode(t_data *data);
+void				check_empty_file(FILE *fp);

@@ -53,12 +53,13 @@ int	main(int argc, char **argv)
 		perror("fopen\n");
 		return (1);
 	}
+	check_empty_file(data.fp);
 	read_file(&data);
+	fclose(data.fp);
 	sort_array(&data);
 	build_huffman_tree(&data);
 	build_lookup_table(&data);
 	encode(&data, argv[1]);
-	fclose(data.fp);
 	clear_tree(data.root);
 	clear_lookup_table(&data);
 	return (0);

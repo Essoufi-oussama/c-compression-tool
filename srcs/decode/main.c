@@ -29,6 +29,7 @@ void    read_header(t_data *data, char *file)
         perror("fopen");
         exit(1);
     }
+    check_empty_file(data->fp);
     for (int i = 0; i < 256; i++)
     {
         if (!feof(data->fp))
@@ -75,5 +76,4 @@ int main(int argc, char **argv)
     decode(&data);
     fclose(data.fp);
     clear_tree(data.root);
-	// clear_lookup_table(&data);
 }
